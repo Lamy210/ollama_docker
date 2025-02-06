@@ -1,0 +1,42 @@
+version: '3.8'  # バージョン指定（お好みで変更可能）
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    environment:
+      - HTTPS_PROXY=http://wwwproxy.osakac.ac.jp:8080 #httpの設定を行うとモデルがダウンロード出来なくなる
+      - https_proxy=http://wwwproxy.osakac.ac.jp:8080
+      - OLLAMA_DEBUG=true
+
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+              device_ids: ["0"]  # GPU 0 を使用
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3010:8080"
+    volumes:
+      - open-webui:/app/backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - HTTPS_PROXY=http://wwwproxy.osakac.ac.jp:8080
+      - https_proxy=http://wwwproxy.osakac.ac.jp:8080
+    restart: always
+
+volumes:
+  ollama:
+    name: ollama
+  open-webui:
+    name: open-webui
